@@ -60,7 +60,8 @@ function Login() {
             let errorMessage = 'An error occurred. Please try again.';
             
             if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
-                errorMessage = 'Network Error: Unable to connect to the backend server. Please ensure the backend is running on http://localhost:3001';
+                const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+                errorMessage = `Network Error: Unable to connect to the backend server. Please ensure the backend is running on ${apiUrl}`;
             } else if (err.response?.data?.message) {
                 errorMessage = err.response.data.message;
             } else if (err.message) {

@@ -24,14 +24,18 @@ function Orders() {
             setLoading(true);
             setError('');
             
-            // Fetch user-specific orders if user is logged in and has an ID
-            if (user?.id) {
-                const response = await orderAPI.getByUserId(user.id);
-                setOrders(response.orders || []);
+            // Fetch orders - backend should filter by authenticated user automatically
+            const response = await orderAPI.getAll();
+            const allOrders = response.orders || [];
+            
+            // If user is not admin, filter orders by userId on frontend
+            // (in case backend doesn't filter automatically)
+            if (user?.id && !userIsAdmin) {
+                const userOrders = allOrders.filter(order => order.userId === user.id);
+                setOrders(userOrders);
             } else {
-                // Fallback to getAll if no userId (shouldn't happen for logged in users)
-                const response = await orderAPI.getAll();
-                setOrders(response.orders || []);
+                // For admins, show all orders
+                setOrders(allOrders);
             }
         } catch (err) {
             setError('Failed to fetch orders. Please try again.');

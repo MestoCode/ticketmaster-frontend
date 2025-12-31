@@ -32,7 +32,8 @@ api.interceptors.response.use(
   (error) => {
     // Handle network errors
     if (error.message === 'Network Error' || !error.response) {
-      error.message = 'Network Error: Unable to connect to the server. Please check if the backend is running on http://localhost:3001';
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      error.message = `Network Error: Unable to connect to the server. Please check if the backend is running on ${apiUrl}`;
     }
     return Promise.reject(error);
   }
@@ -59,6 +60,10 @@ export const adminAPI = {
                   response.headers['x-auth-token'] ||
                   response.headers['token'];
     return { ...response.data, token };
+  },
+  getAllOrders: async () => {
+    const response = await api.get('/admin/orders');
+    return response.data;
   },
 };
 

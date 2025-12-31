@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { orderAPI } from '../services/api';
+import { orderAPI, adminAPI } from '../services/api';
 import Spinner from '../components/Spinner';
 
 function Dashboard() {
@@ -17,11 +17,18 @@ function Dashboard() {
         try {
             setLoading(true);
             setError('');
-            const response = await orderAPI.getAll();
+            // Use admin endpoint to get all orders
+            const response = await adminAPI.getAllOrders();
             setOrders(response.orders || []);
         } catch (err) {
-            setError('Failed to fetch orders. Please try again.');
-            console.error('Error fetching orders:', err);
+            // Fallback to regular getAll if admin endpoint fails
+            try {
+                const response = await orderAPI.getAll();
+                setOrders(response.orders || []);
+            } catch (fallbackErr) {
+                setError('Failed to fetch orders. Please try again.');
+                console.error('Error fetching orders:', fallbackErr);
+            }
         } finally {
             setLoading(false);
         }
