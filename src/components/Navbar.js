@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo-tickets.png';
 
 function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
+    const { user, logout, isAdmin } = useAuth();
 
     const toggleMenu = () => {
         setIsOpen(!isOpen);
@@ -82,12 +84,43 @@ function Navbar() {
                         >
                             About
                         </Link>
-                        <Link
-                            to="/login"
-                            className="bg-primary_important text-white hover:bg-primary_hint px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
-                        >
-                            Sign In
-                        </Link>
+                        {user ? (
+                            <>
+                                {isAdmin() && (
+                                    <Link
+                                        to="/dashboard"
+                                        className="text-white hover:text-primary_hint px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
+                                    >
+                                        Dashboard
+                                    </Link>
+                                )}
+                                <Link
+                                    to="/orders"
+                                    className="text-white hover:text-primary_hint px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
+                                >
+                                    Orders
+                                </Link>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-white/60 text-sm">{user.email}</span>
+                                    <button
+                                        onClick={() => {
+                                            logout();
+                                            navigate('/');
+                                        }}
+                                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <Link
+                                to="/login"
+                                className="bg-primary_important text-white hover:bg-primary_hint px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
+                            >
+                                Sign In
+                            </Link>
+                        )}
                     </div>
 
                     {/* Mobile menu button */}
@@ -163,13 +196,47 @@ function Navbar() {
                     >
                         About
                     </Link>
-                    <Link
-                        to="/login"
-                        className="w-full text-left block bg-primary_important text-white hover:bg-primary_hint px-3 py-2 rounded-md text-base font-medium transition duration-150 ease-in-out"
-                        onClick={() => setIsOpen(false)}
-                    >
-                        Sign In
-                    </Link>
+                    {user ? (
+                        <>
+                            {isAdmin() && (
+                                <Link
+                                    to="/dashboard"
+                                    className="text-white hover:bg-gray-800 block px-3 py-2 rounded-md text-base font-medium transition duration-150 ease-in-out"
+                                    onClick={() => setIsOpen(false)}
+                                >
+                                    Dashboard
+                                </Link>
+                            )}
+                            <Link
+                                to="/orders"
+                                className="text-white hover:bg-gray-800 block px-3 py-2 rounded-md text-base font-medium transition duration-150 ease-in-out"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                Orders
+                            </Link>
+                            <div className="px-3 py-2 text-white/60 text-sm">
+                                {user.email}
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    logout();
+                                    navigate('/');
+                                }}
+                                className="w-full text-left block bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-base font-medium transition duration-150 ease-in-out"
+                            >
+                                Logout
+                            </button>
+                        </>
+                    ) : (
+                        <Link
+                            to="/login"
+                            className="w-full text-left block bg-primary_important text-white hover:bg-primary_hint px-3 py-2 rounded-md text-base font-medium transition duration-150 ease-in-out"
+                            onClick={() => setIsOpen(false)}
+                        >
+                            Sign In
+                        </Link>
+                    )}
                 </div>
             </div>
         </nav>

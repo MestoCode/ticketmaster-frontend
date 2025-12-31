@@ -1,9 +1,84 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { orderAPI } from '../services/api';
 import fakeQR from '../assets/fake-qr.jpg';
+import { useState, useEffect } from 'react';
 
 function MyTickets() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const eventData = location.state?.eventData;
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  // No redirect - allow viewing the page, but require login to create order
+
+  const handleCreateOrder = async () => {
+    // Check if user is logged in
+    if (!user) {
+      navigate('/login', { state: { from: '/tickets', eventData } });
+      return;
+    }
+
+    if (!eventData) {
+      setError('Missing event data');
+      return;
+    }
+
+    if (!user.id) {
+      setError('User ID not found. Please login again.');
+      return;
+    }
+
+    setCreating(true);
+    setError('');
+    setSuccess(false);
+
+    try {
+      // Calculate price - use min price from range or default
+      const totalPrice = eventData.priceRange?.min || 20;
+      
+      // Format date - convert from YYYY-MM-DD to the format needed
+      const eventDate = eventData.date || new Date().toISOString().split('T')[0];
+      
+      const orderData = {
+        title: eventData.name || 'Event Ticket',
+        eventDate: eventDate,
+        venue: eventData.venue || 'TBA',
+        location: eventData.city || 'Location TBA',
+        totalPrice: totalPrice,
+        eventID: eventData.id || '',
+        userId: user.id,
+      };
+
+      await orderAPI.create(orderData);
+      setSuccess(true);
+      
+      // Redirect to orders page after a short delay
+      setTimeout(() => {
+        navigate('/orders');
+      }, 2000);
+    } catch (err) {
+      console.error('Error creating order:', err);
+      setError(
+        err.response?.data?.message || 
+        err.message || 
+        'Failed to create order. Please try again.'
+      );
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='text-white'>Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className='min-h-screen py-12 px-4'>
@@ -58,7 +133,6 @@ function MyTickets() {
                     )}
 
                     {/* Venue */}
-
                     {eventData.venue && (
                       <div className='flex items-start'>
                         <div className='w-12 h-12 bg-primary_golden/20 rounded-lg flex items-center justify-center mr-4 flex-shrink-0'>
@@ -90,16 +164,27 @@ function MyTickets() {
                     )}
                   </div>
 
-                  {/* Ticket URL */}
-                  {eventData.url && (
-                    <a
-                      href={eventData.url}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='mt-8 w-full block text-center bg-primary_important hover:bg-primary_hint text-white font-semibold py-4 px-6 rounded-xl transition duration-300 shadow-lg hover:shadow-xl'
-                    >
-                      View Official Event Page
-                    </a>
+                  {/* Create Order Button */}
+                  <button
+                    onClick={handleCreateOrder}
+                    disabled={creating || success}
+                    className='mt-8 w-full bg-primary_important hover:bg-primary_hint text-white font-semibold py-4 px-6 rounded-xl transition duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed'
+                  >
+                    {creating ? 'Creating Order...' : success ? 'Order Created! Redirecting...' : 'Create Order'}
+                  </button>
+
+                  {/* Error Message */}
+                  {error && (
+                    <div className='mt-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-sm'>
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Success Message */}
+                  {success && (
+                    <div className='mt-4 p-3 bg-green-500/20 border border-green-500/50 rounded-lg text-green-200 text-sm'>
+                      Order created successfully! Redirecting to your orders...
+                    </div>
                   )}
                 </div>
               </div>
@@ -176,4 +261,3 @@ function MyTickets() {
 }
 
 export default MyTickets;
-
